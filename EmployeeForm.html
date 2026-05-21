@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UICUSA — Business Trip Suite</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;color:#111;min-height:100vh}
+.top-bar{background:#1a3a6b;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.top-left{display:flex;align-items:center;gap:12px}
+.logo{background:#fff;color:#1a3a6b;font-size:11px;font-weight:700;padding:5px 8px;border-radius:4px;letter-spacing:0.05em}
+.top-bar-title{color:#fff;font-size:15px;font-weight:500}
+.user-pill{background:rgba(255,255,255,0.15);color:#fff;font-size:12px;padding:4px 12px;border-radius:20px;display:flex;align-items:center;gap:6px}
+.admin-badge{background:#f9a825;color:#111;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.tabs-bar{background:#fff;border-bottom:1px solid #e0e0e0;display:flex;padding:0 24px;position:sticky;top:49px;z-index:99;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow-x:auto}
+.tab{padding:14px 16px;font-size:13px;font-weight:500;color:#666;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.15s;background:none;border-top:none;border-left:none;border-right:none;font-family:Arial,sans-serif}
+.tab:hover{color:#1a3a6b}
+.tab.active{color:#1a3a6b;border-bottom-color:#1a3a6b;font-weight:700}
+.tab.admin-only{display:none}
+.container{max-width:760px;margin:28px auto;padding:0 16px 80px}
+.card{background:#fff;border-radius:8px;border:1px solid #e0e0e0;padding:24px;margin-bottom:16px}
+.section-label{font-size:11px;font-weight:700;color:#1a3a6b;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #e8edf4}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-grid.full{grid-template-columns:1fr}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:#555;font-weight:600}
+.field input,.field select,.field textarea{border:1px solid #d0d0d0;border-radius:6px;padding:9px 11px;font-size:14px;background:#fff;color:#111;font-family:Arial,sans-serif;outline:none;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#1a3a6b;box-shadow:0 0 0 3px rgba(26,58,107,0.1)}
+.field textarea{resize:vertical;min-height:80px}
+.field input[readonly]{background:#f0f4fa;color:#1a3a6b;font-weight:600}
+.ptags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.ptag{padding:6px 14px;border:1px solid #d0d0d0;border-radius:20px;font-size:13px;cursor:pointer;background:#fff;color:#555;transition:all 0.12s;font-family:Arial,sans-serif}
+.ptag.on{background:#1a3a6b;color:#fff;border-color:#1a3a6b}
+.total-box{background:#f0f4fa;border-radius:6px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:4px;border:1px solid #d0d9ec}
+.total-box .lbl{font-size:13px;color:#555}
+.total-box .amt{font-size:22px;font-weight:700;color:#1a3a6b}
+/* Expense table */
+.exp-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+.exp-table th{padding:8px 10px;background:#f0f4fa;color:#555;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;text-align:left;border-bottom:2px solid #d0d9ec}
+.exp-table td{padding:6px 4px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.exp-table td input,.exp-table td select{border:1px solid #d0d0d0;border-radius:5px;padding:6px 8px;font-size:13px;width:100%;font-family:Arial,sans-serif;background:#fff;outline:none}
+.exp-table td input:focus,.exp-table td select:focus{border-color:#1a3a6b}
+.exp-table td.del-cell{width:32px;text-align:center}
+.del-btn{width:28px;height:28px;border:1px solid #e0e0e0;border-radius:5px;background:#fff;color:#aaa;cursor:pointer;font-size:14px;line-height:1}
+.del-btn:hover{border-color:#c62828;color:#c62828;background:#ffebee}
+.add-btn{width:100%;padding:9px;border:1px dashed #c0c0c0;border-radius:6px;background:#fafafa;color:#666;cursor:pointer;font-size:13px;margin-bottom:12px;font-family:Arial,sans-serif}
+.add-btn:hover{border-color:#1a3a6b;color:#1a3a6b;background:#f0f4fa}
+/* Receipt upload */
+.receipt-zone{border:2px dashed #c0c0c0;border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:#fafafa;transition:all 0.15s}
+.receipt-zone:hover,.receipt-zone.drag{border-color:#1a3a6b;background:#f0f4fa}
+.receipt-zone input[type=file]{display:none}
+.receipt-zone .rz-icon{font-size:28px;margin-bottom:6px}
+.receipt-zone .rz-text{font-size:13px;color:#666}
+.receipt-zone .rz-sub{font-size:11px;color:#aaa;margin-top:4px}
+.receipt-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.receipt-item{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:#e8f0fb;border-radius:6px;font-size:13px;color:#1a3a6b;border:1px solid #b3c8ef}
+.receipt-item .ri-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.receipt-item .ri-status{font-size:11px;color:#2e7d32;margin-left:8px;flex-shrink:0}
+.receipt-item .ri-del{background:none;border:none;color:#c62828;cursor:pointer;font-size:14px;margin-left:6px;flex-shrink:0}
+/* Checklist */
+.checklist{display:flex;flex-direction:column;gap:6px}
+.chk{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #e8e8e8;border-radius:6px;cursor:pointer;font-size:14px}
+.chk:hover{background:#f5f5f5}
+.chk.done{background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32}
+.chk input{width:16px;height:16px;accent-color:#1a3a6b;cursor:pointer;flex-shrink:0}
+.stars{display:flex;gap:4px;margin-top:6px}
+.star{font-size:22px;cursor:pointer;color:#ddd;line-height:1;transition:color 0.1s}
+.star.on{color:#f9a825}
+.star-lbl{font-size:12px;color:#888;margin-left:6px;align-self:center}
+/* History tab */
+.hist-section{margin-bottom:24px}
+.hist-title{font-size:13px;font-weight:700;color:#1a3a6b;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e8edf4;display:flex;align-items:center;gap:8px}
+.hist-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:8px;border:1px solid #e0e0e0;overflow:hidden}
+.hist-table th{padding:9px 12px;background:#1a3a6b;color:#fff;font-size:11px;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:0.04em}
+.hist-table td{padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+.hist-table tr:last-child td{border-bottom:none}
+.hist-table tr:hover td{background:#f8f9ff}
+.copy-btn{padding:3px 8px;border:1px solid #1a3a6b;border-radius:4px;background:#fff;color:#1a3a6b;font-size:11px;cursor:pointer;font-family:Arial,sans-serif}
+.copy-btn:hover{background:#1a3a6b;color:#fff}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}
+.b-approved{background:#e8f5e9;color:#2e7d32}
+.b-pending{background:#fff3e0;color:#e65100}
+.b-gm{background:#e3f2fd;color:#0d47a1}
+.b-rejected{background:#ffebee;color:#c62828}
+/* Submit */
+.submit-row{margin-top:8px}
+.btn-submit{width:100%;padding:13px;background:#1a3a6b;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.02em;font-family:Arial,sans-serif}
+.btn-submit:hover{background:#122d55}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed}
+.msg{padding:14px;border-radius:6px;font-size:14px;text-align:center;display:none;margin-top:12px}
+.msg.ok{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7}
+.msg.err{background:#ffebee;color:#b71c1c;border:1px solid #ef9a9a}
+.req-box{background:#e8f0fb;border-radius:6px;padding:14px 16px;font-size:13px;color:#1a3a6b;border:1px solid #b3c8ef;display:none;margin-top:12px;line-height:1.6}
+.req-box strong{font-size:15px;display:block;margin-bottom:4px}
+.page{display:none}
+.page.active{display:block}
+.loading-screen{text-align:center;padding:80px 24px;color:#aaa;font-size:14px}
+@media(max-width:560px){.form-grid,.form-grid.three{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="top-left">
+    <span class="logo">UICUSA</span>
+    <span class="top-bar-title">Business Trip Suite</span>
+  </div>
+  <div class="user-pill" id="userPill">Loading…</div>
+</div>
+<div class="tabs-bar" id="tabsBar">
+  <button class="tab active" onclick="switchPage(0)">Trip Request</button>
+  <button class="tab" onclick="switchPage(1)">Trip Report</button>
+  <button class="tab" onclick="switchPage(2)">Expense Report</button>
+  <button class="tab" onclick="switchPage(3)">Sales Follow-up</button>
+  <button class="tab" onclick="switchPage(4)">My History</button>
+  <button class="tab admin-only" onclick="switchPage(5)" id="reportsTab">Reports</button>
+</div>
+
+<div class="container">
+
+<!-- PAGE 0: TRIP REQUEST -->
+<div id="page0" class="page active">
+  <div class="card">
+    <div class="section-label">Traveler information</div>
+    <div class="form-grid">
+      <div class="field"><label>Employee name *</label><input id="r_name" type="text" placeholder="Full name"></div>
+      <div class="field"><label>Employee email *</label><input id="r_email" type="email" placeholder="you@uicusa.com"></div>
+      <div class="field"><label>Department *</label>
+        <select id="r_dept">
+          <option value="">— Select department —</option>
+          <option>Engineering</option>
+          <option>Operations</option>
+          <option>Sales</option>
+          <option>Latin American Sales</option>
+          <option>Accounting</option>
+          <option>HR</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Trip details</div>
+    <div class="form-grid">
+      <div class="field"><label>Destination *</label><input id="r_dest" type="text" placeholder="City, Country"></div>
+      <div class="field"><label>Client / company *</label><input id="r_client" type="text" placeholder="Company name"></div>
+      <div class="field"><label>Departure date *</label><input id="r_depart" type="date"></div>
+      <div class="field"><label>Return date *</label><input id="r_return" type="date"></div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Trip purpose *</label>
+      <div class="ptags">
+        <button type="button" class="ptag" onclick="toggleTag(this,'r_purposes','Client meeting')">Client meeting</button>
+        <button type="button" class="ptag" onclick="toggleTag(this,'r_purposes','Sales demo')">Sales demo</button>
+        <button type="button" class="ptag" onclick="toggleTag(this,'r_purposes','Trade show')">Trade show</button>
+        <button type="button" class="ptag" onclick="toggleTag(this,'r_purposes','Training')">Training</button>
+        <button type="button" class="ptag" onclick="toggleTag(this,'r_purposes','Partnership')">Partnership</button>
+        <button type="button" class="ptag" onclick="toggleTag(this,'r_purposes','Installation / support')">Installation / support</button>
+      </div>
+    </div>
+    <div class="form-grid full">
+      <div class="field"><label>Business justification *</label><textarea id="r_justification" placeholder="Describe the business objective and expected outcome..."></textarea></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Budget estimate</div>
+    <div class="form-grid three">
+      <div class="field"><label>Airfare (USD)</label><input id="r_airfare" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcReqTotal()"></div>
+      <div class="field"><label>Hotel / night (USD)</label><input id="r_hotel" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcReqTotal()"></div>
+      <div class="field"><label>Nights</label><input id="r_nights" type="number" min="0" placeholder="0" oninput="calcReqTotal()"></div>
+      <div class="field"><label>Per diem / day (USD)</label><input id="r_perdiem" type="number" min="0" step="0.01" placeholder="75" oninput="calcReqTotal()"></div>
+      <div class="field"><label>Days</label><input id="r_days" type="number" min="0" placeholder="0" oninput="calcReqTotal()"></div>
+      <div class="field"><label>Other (USD)</label><input id="r_other" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcReqTotal()"></div>
+    </div>
+    <div class="total-box"><span class="lbl">Estimated total budget</span><span class="amt" id="r_total">$0.00</span></div>
+  </div>
+  <div class="submit-row"><button class="btn-submit" id="r_btn" onclick="submitRequest()">Submit trip request</button></div>
+  <div class="msg" id="r_msg"></div>
+  <div class="req-box" id="r_box"></div>
+</div>
+
+<!-- PAGE 1: TRIP REPORT -->
+<div id="page1" class="page">
+  <div class="card">
+    <div class="section-label">Trip summary</div>
+    <div class="form-grid">
+      <div class="field"><label>Employee name *</label><input id="tr_name" type="text" placeholder="Full name"></div>
+      <div class="field"><label>Employee email *</label><input id="tr_email" type="email" placeholder="you@uicusa.com"></div>
+      <div class="field"><label>Department *</label>
+        <select id="tr_dept">
+          <option value="">— Select department —</option>
+          <option>Engineering</option><option>Operations</option><option>Sales</option>
+          <option>Latin American Sales</option><option>Accounting</option><option>HR</option>
+        </select>
+      </div>
+      <div class="field"><label>Trip request ID <span style="color:#aaa;font-weight:400">(from your History tab)</span></label><input id="tr_reqid" type="text" placeholder="TRIP-2025-XXXXXX"></div>
+      <div class="field"><label>Destination *</label><input id="tr_dest" type="text" placeholder="City, Country"></div>
+      <div class="field"><label>Departure date *</label><input id="tr_depart" type="date"></div>
+      <div class="field"><label>Return date *</label><input id="tr_return" type="date"></div>
+      <div class="field"><label>Client / company visited *</label><input id="tr_client" type="text" placeholder="Company name"></div>
+      <div class="field"><label>Contacts met</label><input id="tr_contacts" type="text" placeholder="Names and titles"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Objectives & outcomes</div>
+    <div class="form-grid full">
+      <div class="field"><label>Trip objectives *</label><textarea id="tr_objectives" placeholder="What were you aiming to accomplish?"></textarea></div>
+      <div class="field"><label>Key outcomes & results *</label><textarea id="tr_outcomes" placeholder="What was accomplished? Decisions made, agreements reached..."></textarea></div>
+      <div class="field"><label>Challenges encountered</label><textarea id="tr_challenges" placeholder="Any obstacles, objections, or issues"></textarea></div>
+      <div class="field"><label>Market & competitive intelligence</label><textarea id="tr_intel" placeholder="Insights about the market, competitors, or payment device landscape"></textarea></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Next steps</div>
+    <div class="form-grid full">
+      <div class="field"><label>Immediate action items *</label><textarea id="tr_actions" placeholder="Tasks, owners, and deadlines resulting from this trip"></textarea></div>
+      <div class="field"><label>Follow-up timeline</label><input id="tr_timeline" type="text" placeholder="e.g. Proposal due in 2 weeks, decision by June 30"></div>
+      <div class="field"><label>Additional recommendations</label><textarea id="tr_recs" placeholder="Suggestions for the team or management"></textarea></div>
+    </div>
+  </div>
+  <div class="submit-row"><button class="btn-submit" id="tr_btn" onclick="submitReport()">Submit trip report</button></div>
+  <div class="msg" id="tr_msg"></div>
+  <div class="req-box" id="tr_box"></div>
+</div>
+
+<!-- PAGE 2: EXPENSE REPORT -->
+<div id="page2" class="page">
+  <div class="card">
+    <div class="section-label">Report information</div>
+    <div class="form-grid">
+      <div class="field"><label>Employee name *</label><input id="ex_name" type="text" placeholder="Full name"></div>
+      <div class="field"><label>Employee email *</label><input id="ex_email" type="email" placeholder="you@uicusa.com"></div>
+      <div class="field"><label>Department *</label>
+        <select id="ex_dept">
+          <option value="">— Select department —</option>
+          <option>Engineering</option><option>Operations</option><option>Sales</option>
+          <option>Latin American Sales</option><option>Accounting</option><option>HR</option>
+        </select>
+      </div>
+      <div class="field"><label>Trip Request ID <span style="color:#aaa;font-weight:400">(if applicable)</span></label><input id="ex_reqid" type="text" placeholder="TRIP-2025-XXXXXX"></div>
+      <div class="field"><label>Report description *</label><input id="ex_ref" type="text" placeholder="e.g. NYC Client Visit May 2025 / Office Supplies Apr 2025"></div>
+      <div class="field"><label>Submission date *</label><input id="ex_date" type="date"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Itemized expenses</div>
+    <table class="exp-table">
+      <thead>
+        <tr>
+          <th style="width:28%">Description</th>
+          <th style="width:22%">Category</th>
+          <th style="width:16%">Date</th>
+          <th style="width:14%">Amount (USD)</th>
+          <th style="width:12%">Receipt</th>
+          <th style="width:8%"></th>
+        </tr>
+      </thead>
+      <tbody id="exp_rows"></tbody>
+    </table>
+    <button type="button" class="add-btn" onclick="addExpRow()">+ Add expense item</button>
+    <div class="total-box"><span class="lbl">Total expenses</span><span class="amt" id="ex_total">$0.00</span></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Receipt upload</div>
+    <div class="receipt-zone" id="receiptZone" onclick="document.getElementById('receiptInput').click()" ondragover="onDrag(event,true)" ondragleave="onDrag(event,false)" ondrop="onDrop(event)">
+      <input type="file" id="receiptInput" multiple accept="image/*,.pdf" onchange="onFileSelect(event)">
+      <div class="rz-icon">📎</div>
+      <div class="rz-text">Click or drag & drop receipts here</div>
+      <div class="rz-sub">Images or PDFs · Multiple files allowed · Saved to Google Drive</div>
+    </div>
+    <div class="receipt-list" id="receiptList"></div>
+    <div id="receiptNote" style="font-size:12px;color:#aaa;margin-top:6px;display:none">Receipts will upload to Google Drive after you submit the expense report.</div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Notes</div>
+    <div class="form-grid full">
+      <div class="field"><label>Notes / missing receipts explanation</label><textarea id="ex_notes" placeholder="Note any missing receipts or special circumstances"></textarea></div>
+    </div>
+  </div>
+  <div class="submit-row"><button class="btn-submit" id="ex_btn" onclick="submitExpense()">Submit expense report</button></div>
+  <div class="msg" id="ex_msg"></div>
+  <div class="req-box" id="ex_box"></div>
+</div>
+
+<!-- PAGE 3: SALES FOLLOW-UP -->
+<div id="page3" class="page">
+  <div class="card">
+    <div class="section-label">Opportunity details</div>
+    <div class="form-grid">
+      <div class="field"><label>Company name *</label><input id="sf_company" type="text" placeholder="Client / prospect"></div>
+      <div class="field"><label>Primary contact *</label><input id="sf_contact" type="text" placeholder="Name and title"></div>
+      <div class="field"><label>Contact email *</label><input id="sf_cemail" type="email" placeholder="contact@company.com"></div>
+      <div class="field"><label>Contact phone</label><input id="sf_phone" type="tel" placeholder="+1 (___) ___-____"></div>
+      <div class="field"><label>Our employee *</label><input id="sf_emp" type="text" placeholder="Your name"></div>
+      <div class="field"><label>Employee email *</label><input id="sf_eemail" type="email" placeholder="you@uicusa.com"></div>
+      <div class="field"><label>Meeting date *</label><input id="sf_date" type="date"></div>
+      <div class="field"><label>Opportunity stage *</label>
+        <select id="sf_stage">
+          <option value="">— Select stage —</option>
+          <option>Prospecting</option><option>Demo / discovery</option>
+          <option>Proposal sent</option><option>Negotiation</option>
+          <option>Verbal commit</option><option>Closed won</option><option>Closed lost</option>
+        </select>
+      </div>
+      <div class="field"><label>Est. deal value (USD)</label><input id="sf_value" type="number" min="0" placeholder="0"></div>
+      <div class="field"><label>Expected close date</label><input id="sf_close" type="date"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Products of interest</div>
+    <div class="ptags">
+      <button type="button" class="ptag" onclick="toggleTag(this,'sf_products','POS terminal')">POS terminal</button>
+      <button type="button" class="ptag" onclick="toggleTag(this,'sf_products','Mobile reader')">Mobile reader</button>
+      <button type="button" class="ptag" onclick="toggleTag(this,'sf_products','Kiosk / self-service')">Kiosk / self-service</button>
+      <button type="button" class="ptag" onclick="toggleTag(this,'sf_products','Gateway integration')">Gateway integration</button>
+      <button type="button" class="ptag" onclick="toggleTag(this,'sf_products','White-label solution')">White-label solution</button>
+      <button type="button" class="ptag" onclick="toggleTag(this,'sf_products','Custom hardware')">Custom hardware</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Meeting notes</div>
+    <div class="form-grid full">
+      <div class="field"><label>Key discussion points *</label><textarea id="sf_notes" placeholder="Pain points, requirements, objections raised..."></textarea></div>
+      <div class="field"><label>Client interest level</label>
+        <div class="stars" id="sf_stars">
+          <span class="star" onclick="setRating(1)">★</span><span class="star" onclick="setRating(2)">★</span>
+          <span class="star" onclick="setRating(3)">★</span><span class="star" onclick="setRating(4)">★</span>
+          <span class="star" onclick="setRating(5)">★</span>
+          <span class="star-lbl" id="sf_rating_lbl">Not rated</span>
+        </div>
+      </div>
+      <div class="field"><label>Competitor mentions</label><input id="sf_competitors" type="text" placeholder="Competitors mentioned or being evaluated"></div>
+      <div class="field"><label>Decision-maker identified?</label>
+        <select id="sf_dm">
+          <option>Unknown</option><option>Yes — in the room</option>
+          <option>Yes — not in the room</option><option>No — still identifying</option><option>Committee decision</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Follow-up checklist</div>
+    <div class="checklist">
+      <label class="chk"><input type="checkbox" onchange="toggleChk(this)"><span>Send thank-you email within 24 hours</span></label>
+      <label class="chk"><input type="checkbox" onchange="toggleChk(this)"><span>Share product brochure / spec sheet</span></label>
+      <label class="chk"><input type="checkbox" onchange="toggleChk(this)"><span>Send demo recording or presentation deck</span></label>
+      <label class="chk"><input type="checkbox" onchange="toggleChk(this)"><span>Prepare and send formal proposal</span></label>
+      <label class="chk"><input type="checkbox" onchange="toggleChk(this)"><span>Schedule next call / meeting</span></label>
+      <label class="chk"><input type="checkbox" onchange="toggleChk(this)"><span>Add opportunity to CRM</span></label>
+      <label class="chk"><input type="checkbox" onchange="toggleChk(this)"><span>Loop in technical / pre-sales team</span></label>
+      <label class="chk"><input type="checkbox" onchange="toggleChk(this)"><span>Request RFP / formal requirements doc</span></label>
+    </div>
+    <div class="form-grid full" style="margin-top:12px">
+      <div class="field"><label>Additional notes</label><textarea id="sf_extra" placeholder="Anything else relevant for the sales team or management..."></textarea></div>
+    </div>
+  </div>
+  <div class="submit-row"><button class="btn-submit" id="sf_btn" onclick="submitSalesFollowup()">Submit sales follow-up</button></div>
+  <div class="msg" id="sf_msg"></div>
+  <div class="req-box" id="sf_box"></div>
+</div>
+
+<!-- PAGE 4: MY HISTORY -->
+<div id="page4" class="page">
+  <div class="card">
+    <div class="section-label">My submission history</div>
+    <p style="font-size:13px;color:#666;margin-bottom:16px">Find your Trip Request IDs here to reference in expense and trip reports. Click any ID to copy it.</p>
+    <div id="historyContent"><div class="loading-screen">Loading your history…</div></div>
+  </div>
+</div>
+
+<!-- PAGE 5: REPORTS (admin only) -->
+<div id="page5" class="page">
+  <div id="reportsContainer"><div class="loading-screen">Loading reports…</div></div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// -- SESSION --
+var SESSION = { email:'', name:'', isAdmin:false, isManager:false, dept:'' };
+var reportsLoaded = false;
+var historyLoaded = false;
+
+google.script.run
+  .withSuccessHandler(function(u) {
+    SESSION = u;
+    // Fill user pill
+    var pill = document.getElementById('userPill');
+    pill.innerHTML = u.name + (u.isAdmin ? ' <span class="admin-badge">ADMIN</span>' : '');
+    // Show Reports tab for admins
+    if (u.isAdmin) {
+      document.getElementById('reportsTab').style.display = 'block';
+    }
+    // Auto-fill employee name and email if known
+    if (u.name && u.email) {
+      var nameFields = ['r_name','tr_name','ex_name','sf_emp'];
+      var emailFields = ['r_email','tr_email','ex_email','sf_eemail'];
+      nameFields.forEach(function(id){ var el=document.getElementById(id); if(el && !el.value){ el.value=u.name; } });
+      emailFields.forEach(function(id){ var el=document.getElementById(id); if(el && !el.value){ el.value=u.email; } });
+      // Auto-select department
+      if (u.dept) {
+        ['r_dept','tr_dept','ex_dept'].forEach(function(id){
+          var el=document.getElementById(id);
+          if(el){ for(var i=0;i<el.options.length;i++){ if(el.options[i].value===u.dept){ el.selectedIndex=i; break; } } }
+        });
+      }
+    }
+  })
+  .getSessionInfo();
+
+// -- NAVIGATION --
+function switchPage(i) {
+  document.querySelectorAll('.tab').forEach(function(t,j){ t.classList.toggle('active',i===j); });
+  document.querySelectorAll('.page').forEach(function(p,j){ p.classList.toggle('active',i===j); });
+  if (i===4 && !historyLoaded) { loadHistory(); historyLoaded=true; }
+  if (i===5 && !reportsLoaded) { loadReports(); reportsLoaded=true; }
+}
+
+// -- HISTORY TAB --
+function loadHistory() {
+  google.script.run
+    .withSuccessHandler(function(data) { renderHistory(data); })
+    .withFailureHandler(function(e) {
+      document.getElementById('historyContent').innerHTML = '<div style="color:#c62828;padding:20px">Error: '+e.message+'</div>';
+    })
+    .getMyHistory();
+}
+
+function statusBadge(s) {
+  var m = { PENDING_DEPT:['b-pending','Pending 1st approval'], PENDING_GM:['b-gm','Pending GM'], APPROVED:['b-approved','Approved'], REJECTED:['b-rejected','Rejected'] };
+  var b = m[s]||['b-pending',s||'—'];
+  return '<span class="badge '+b[0]+'">'+b[1]+'</span>';
+}
+function fmtDate(v){ if(!v) return '—'; var d=new Date(v); return isNaN(d)?String(v).substring(0,10):d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+
+function renderHistory(data) {
+  var html = '';
+
+  // Trip Requests
+  html += '<div class="hist-section"><div class="hist-title">✈ Trip Requests</div>';
+  if (!data.requests || !data.requests.length) {
+    html += '<p style="color:#aaa;font-size:13px;padding:12px 0">No trip requests submitted yet.</p>';
+  } else {
+    html += '<table class="hist-table"><thead><tr><th>Request ID</th><th>Destination</th><th>Dates</th><th>Est. Budget</th><th>Status</th><th>Submitted</th></tr></thead><tbody>';
+    data.requests.forEach(function(r) {
+      html += '<tr>'
+        + '<td><strong>'+r.RequestID+'</strong><br><button class="copy-btn" onclick="copyText(\''+r.RequestID+'\')">Copy ID</button></td>'
+        + '<td>'+r.Destination+'<br><span style="color:#aaa;font-size:11px">'+r.ClientName+'</span></td>'
+        + '<td style="white-space:nowrap">'+fmtDate(r.DepartureDate)+'<br>'+fmtDate(r.ReturnDate)+'</td>'
+        + '<td><strong>$'+Number(r.EstTotal||0).toFixed(2)+'</strong></td>'
+        + '<td>'+statusBadge(r.Status)+'</td>'
+        + '<td style="color:#aaa;font-size:11px">'+fmtDate(r.SubmittedAt)+'</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
+  // Expense Reports
+  html += '<div class="hist-section"><div class="hist-title">🧾 Expense Reports</div>';
+  if (!data.expenses || !data.expenses.length) {
+    html += '<p style="color:#aaa;font-size:13px;padding:12px 0">No expense reports submitted yet.</p>';
+  } else {
+    html += '<table class="hist-table"><thead><tr><th>Expense ID</th><th>Description</th><th>Date</th><th>Total</th><th>Status</th><th>Receipts</th></tr></thead><tbody>';
+    data.expenses.forEach(function(r) {
+      html += '<tr>'
+        + '<td><strong>'+r.ExpenseID+'</strong></td>'
+        + '<td>'+r.Reference+'</td>'
+        + '<td>'+fmtDate(r.SubmissionDate)+'</td>'
+        + '<td><strong>$'+Number(r.TotalAmount||0).toFixed(2)+'</strong></td>'
+        + '<td>'+statusBadge(r.Status)+'</td>'
+        + '<td>'+(r.ReceiptFolderUrl?'<a href="'+r.ReceiptFolderUrl+'" target="_blank" style="color:#1a3a6b;font-size:12px">View receipts</a>':'—')+'</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
+  // Trip Reports
+  html += '<div class="hist-section"><div class="hist-title">📋 Trip Reports</div>';
+  if (!data.reports || !data.reports.length) {
+    html += '<p style="color:#aaa;font-size:13px;padding:12px 0">No trip reports submitted yet.</p>';
+  } else {
+    html += '<table class="hist-table"><thead><tr><th>Report ID</th><th>Destination</th><th>Client</th><th>Submitted</th></tr></thead><tbody>';
+    data.reports.forEach(function(r) {
+      html += '<tr><td><strong>'+r.ReportID+'</strong></td><td>'+r.Destination+'</td><td>'+r.ClientName+'</td><td>'+fmtDate(r.SubmittedAt)+'</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
+  document.getElementById('historyContent').innerHTML = html;
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(function(){
+    var msg = document.createElement('div');
+    msg.textContent = '✓ Copied: ' + text;
+    msg.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a3a6b;color:#fff;padding:10px 20px;border-radius:6px;font-size:13px;z-index:9999';
+    document.body.appendChild(msg);
+    setTimeout(function(){ document.body.removeChild(msg); }, 2000);
+  });
+}
+
+// -- REPORTS TAB (admin) --
+function loadReports() {
+  var c = document.getElementById('reportsContainer');
+  google.script.run
+    .withSuccessHandler(function(html){ c.innerHTML=html; })
+    .withFailureHandler(function(e){ c.innerHTML='<div style="padding:40px;color:#c62828">Error: '+e.message+'</div>'; })
+    .getReportsPageHtml();
+}
+
+// -- TAG TOGGLES --
+var tagSets = {};
+function toggleTag(el,set,val){
+  if(!tagSets[set]) tagSets[set]=[];
+  var idx=tagSets[set].indexOf(val);
+  if(idx>-1){ tagSets[set].splice(idx,1); el.classList.remove('on'); }
+  else{ tagSets[set].push(val); el.classList.add('on'); }
+}
+function toggleChk(cb){ cb.closest('.chk').classList.toggle('done',cb.checked); }
+
+// -- STARS --
+var sfRating=0;
+var ratingLabels=['','Cold','Lukewarm','Interested','Very interested','Hot lead'];
+function setRating(n){
+  sfRating=n;
+  document.querySelectorAll('#sf_stars .star').forEach(function(s,i){ s.classList.toggle('on',i<n); });
+  document.getElementById('sf_rating_lbl').textContent=ratingLabels[n]||'Not rated';
+}
+
+// -- BUDGET CALC --
+function calcReqTotal(){
+  var a=parseFloat(document.getElementById('r_airfare').value)||0;
+  var h=parseFloat(document.getElementById('r_hotel').value)||0;
+  var n=parseFloat(document.getElementById('r_nights').value)||0;
+  var p=parseFloat(document.getElementById('r_perdiem').value)||0;
+  var d=parseFloat(document.getElementById('r_days').value)||0;
+  var o=parseFloat(document.getElementById('r_other').value)||0;
+  var t=a+(h*n)+(p*d)+o;
+  document.getElementById('r_total').textContent='$'+t.toFixed(2);
+  return t;
+}
+
+// -- EXPENSE TABLE --
+var expCount=0;
+var EXP_CATS=[
+  'Lodging','Airfare','Ground Transportation','Reimbursement $/mile',
+  'Meals & Tips','Conferences & Seminars',
+  'Entertainment','Office Supply','Mobile / Telecom','Miscellaneous'
+];
+
+function addExpRow(){
+  var tbody=document.getElementById('exp_rows');
+  var tr=document.createElement('tr');
+  var id='erow'+expCount++;
+  tr.id=id;
+  var opts=EXP_CATS.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+  tr.innerHTML=
+    '<td><input type="text" placeholder="e.g. Hotel Marriott / lunch with client" oninput="calcExpTotal()"></td>'+
+    '<td><select>'+opts+'</select></td>'+
+    '<td><input type="date" oninput="calcExpTotal()"></td>'+
+    '<td><input type="number" min="0" step="0.01" placeholder="0.00" oninput="calcExpTotal()"></td>'+
+    '<td style="text-align:center"><span id="rcpt_'+id+'" style="font-size:11px;color:#aaa">—</span></td>'+
+    '<td class="del-cell"><button type="button" class="del-btn" onclick="delExpRow(\''+id+'\')">✕</button></td>';
+  tbody.appendChild(tr);
+}
+function delExpRow(id){ var el=document.getElementById(id); if(el){el.remove();calcExpTotal();} }
+function calcExpTotal(){
+  var t=0;
+  document.querySelectorAll('#exp_rows input[type="number"]').forEach(function(i){ t+=parseFloat(i.value)||0; });
+  document.getElementById('ex_total').textContent='$'+t.toFixed(2);
+  return t;
+}
+
+// -- RECEIPT UPLOAD --
+var pendingFiles=[];
+var submittedExpId='';
+
+function onDrag(e,over){ e.preventDefault(); document.getElementById('receiptZone').classList.toggle('drag',over); }
+function onDrop(e){ e.preventDefault(); onDrag(e,false); handleFiles(e.dataTransfer.files); }
+function onFileSelect(e){ handleFiles(e.target.files); }
+
+function handleFiles(files){
+  Array.from(files).forEach(function(f){
+    pendingFiles.push(f);
+    addReceiptItem(f.name, 'pending');
+  });
+  document.getElementById('receiptNote').style.display='block';
+}
+
+function addReceiptItem(name, status){
+  var list=document.getElementById('receiptList');
+  var div=document.createElement('div');
+  div.className='receipt-item';
+  div.id='ri_'+name.replace(/[^a-z0-9]/gi,'_');
+  div.innerHTML='<span class="ri-name">📄 '+name+'</span>'
+    +'<span class="ri-status">'+(status==='pending'?'⏳ Ready to upload':'✓ Uploaded')+'</span>'
+    +'<button type="button" class="ri-del" onclick="removeFile(\''+name+'\')">✕</button>';
+  list.appendChild(div);
+}
+
+function removeFile(name){
+  pendingFiles=pendingFiles.filter(function(f){ return f.name!==name; });
+  var el=document.getElementById('ri_'+name.replace(/[^a-z0-9]/gi,'_'));
+  if(el){ el.remove(); }
+}
+
+function uploadPendingReceipts(expenseId){
+  if(!pendingFiles.length){ return; }
+  pendingFiles.forEach(function(file){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var b64=e.target.result.split(',')[1];
+      google.script.run
+        .withSuccessHandler(function(res){
+          var el=document.getElementById('ri_'+file.name.replace(/[^a-z0-9]/gi,'_'));
+          if(el){ el.querySelector('.ri-status').textContent=res.success?'✓ Uploaded':'⚠ Error'; }
+        })
+        .saveReceiptFile(expenseId, file.name, b64, file.type);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// -- HELPERS --
+function val(id){ var el=document.getElementById(id); return el?el.value.trim():''; }
+function showMsg(id,text,type){ var el=document.getElementById(id); el.textContent=text; el.className='msg '+type; el.style.display='block'; }
+function showBox(id,title,body){ var el=document.getElementById(id); el.innerHTML='<strong>'+title+'</strong><br>'+body; el.style.display='block'; }
+
+function post(payload,btnId,msgId,okFn,errFn){
+  var b=document.getElementById(btnId), orig=b.textContent;
+  b.disabled=true; b.textContent='Submitting…';
+  fetch(window.location.href,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res.success){ okFn(res); b.textContent='Submitted ✓'; }
+      else{ errFn(res.error||'Unknown error'); b.disabled=false; b.textContent=orig; }
+    })
+    .catch(function(){ errFn('Network error. Please try again.'); b.disabled=false; b.textContent=orig; });
+}
+
+// -- SUBMIT: TRIP REQUEST --
+function submitRequest(){
+  var errs=[];
+  if(!val('r_name'))          errs.push('Employee name');
+  if(!val('r_email'))         errs.push('Employee email');
+  if(!val('r_dept'))          errs.push('Department');
+  if(!val('r_dest'))          errs.push('Destination');
+  if(!val('r_client'))        errs.push('Client / company');
+  if(!val('r_depart'))        errs.push('Departure date');
+  if(!val('r_return'))        errs.push('Return date');
+  if(!(tagSets['r_purposes']&&tagSets['r_purposes'].length)) errs.push('Trip purpose');
+  if(!val('r_justification')) errs.push('Business justification');
+  if(errs.length){ showMsg('r_msg','Please fill in: '+errs.join(', '),'err'); return; }
+  post({
+    action:'submit_request',
+    employeeName:val('r_name'), employeeEmail:val('r_email'), department:val('r_dept'),
+    destination:val('r_dest'), clientName:val('r_client'),
+    departureDate:val('r_depart'), returnDate:val('r_return'),
+    purpose:(tagSets['r_purposes']||[]).join(', '), justification:val('r_justification'),
+    estAirfare:parseFloat(document.getElementById('r_airfare').value)||0,
+    estHotel:parseFloat(document.getElementById('r_hotel').value)||0,
+    estNights:parseFloat(document.getElementById('r_nights').value)||0,
+    estPerDiem:parseFloat(document.getElementById('r_perdiem').value)||75,
+    estDays:parseFloat(document.getElementById('r_days').value)||0,
+    estOther:parseFloat(document.getElementById('r_other').value)||0,
+    estTotal:calcReqTotal()
+  },'r_btn',
+  function(res){
+    showMsg('r_msg','Submitted! Your approver has been notified.','ok');
+    showBox('r_box','Request ID: '+res.requestId,'Save this ID — you can also find it in the <strong>My History</strong> tab. Use it when submitting your expense report after the trip.');
+    historyLoaded=false; // refresh history next time
+  },
+  function(err){ showMsg('r_msg','Error: '+err,'err'); });
+}
+
+// -- SUBMIT: TRIP REPORT --
+function submitReport(){
+  var errs=[];
+  if(!val('tr_name'))       errs.push('Employee name');
+  if(!val('tr_email'))      errs.push('Employee email');
+  if(!val('tr_dept'))       errs.push('Department');
+  if(!val('tr_dest'))       errs.push('Destination');
+  if(!val('tr_depart'))     errs.push('Departure date');
+  if(!val('tr_return'))     errs.push('Return date');
+  if(!val('tr_client'))     errs.push('Client / company');
+  if(!val('tr_objectives')) errs.push('Trip objectives');
+  if(!val('tr_outcomes'))   errs.push('Key outcomes');
+  if(!val('tr_actions'))    errs.push('Action items');
+  if(errs.length){ showMsg('tr_msg','Please fill in: '+errs.join(', '),'err'); return; }
+  post({
+    action:'submit_trip_report',
+    employeeName:val('tr_name'), employeeEmail:val('tr_email'), department:val('tr_dept'), requestId:val('tr_reqid'),
+    destination:val('tr_dest'), clientName:val('tr_client'),
+    departureDate:val('tr_depart'), returnDate:val('tr_return'), contacts:val('tr_contacts'),
+    objectives:val('tr_objectives'), outcomes:val('tr_outcomes'), challenges:val('tr_challenges'),
+    intel:val('tr_intel'), actions:val('tr_actions'), timeline:val('tr_timeline'), recommendations:val('tr_recs')
+  },'tr_btn',
+  function(res){ showMsg('tr_msg','Trip report submitted! Your approver has been notified.','ok'); showBox('tr_box','Report ID: '+res.reportId,'Your department manager will review and forward to GM. Track progress in your confirmation email or the History tab.'); historyLoaded=false; },
+  function(err){ showMsg('tr_msg','Error: '+err,'err'); });
+}
+
+// -- SUBMIT: EXPENSE REPORT --
+function submitExpense(){
+  var errs=[];
+  if(!val('ex_name'))  errs.push('Employee name');
+  if(!val('ex_email')) errs.push('Employee email');
+  if(!val('ex_dept'))  errs.push('Department');
+  if(!val('ex_ref'))   errs.push('Report description');
+  if(!val('ex_date'))  errs.push('Submission date');
+  if(errs.length){ showMsg('ex_msg','Please fill in: '+errs.join(', '),'err'); return; }
+  var items=[];
+  document.querySelectorAll('#exp_rows tr').forEach(function(row){
+    var inputs=row.querySelectorAll('input,select');
+    var amt=parseFloat(inputs[3].value)||0;
+    if(amt>0){ items.push({ description:inputs[0].value, category:inputs[1].value, date:inputs[2].value, amount:amt }); }
+  });
+  if(items.length===0){ showMsg('ex_msg','Please add at least one expense item with an amount.','err'); return; }
+  post({
+    action:'submit_expense',
+    employeeName:val('ex_name'), employeeEmail:val('ex_email'), department:val('ex_dept'),
+    requestId:val('ex_reqid'), reference:val('ex_ref'), submissionDate:val('ex_date'),
+    items:items, totalAmount:calcExpTotal(), notes:val('ex_notes')
+  },'ex_btn',
+  function(res){
+    showMsg('ex_msg','Expense report submitted! Uploading receipts…','ok');
+    showBox('ex_box','Expense Report ID: '+res.expenseId,'Your approver has been notified. '+(pendingFiles.length?'Receipts are being uploaded to Google Drive…':''));
+    if(pendingFiles.length){ uploadPendingReceipts(res.expenseId); }
+    historyLoaded=false;
+  },
+  function(err){ showMsg('ex_msg','Error: '+err,'err'); });
+}
+
+// -- SUBMIT: SALES FOLLOW-UP --
+function submitSalesFollowup(){
+  var errs=[];
+  if(!val('sf_company')) errs.push('Company name');
+  if(!val('sf_contact')) errs.push('Primary contact');
+  if(!val('sf_cemail'))  errs.push('Contact email');
+  if(!val('sf_emp'))     errs.push('Employee name');
+  if(!val('sf_eemail'))  errs.push('Employee email');
+  if(!val('sf_date'))    errs.push('Meeting date');
+  if(!val('sf_stage'))   errs.push('Opportunity stage');
+  if(!val('sf_notes'))   errs.push('Key discussion points');
+  if(errs.length){ showMsg('sf_msg','Please fill in: '+errs.join(', '),'err'); return; }
+  var checked=[];
+  document.querySelectorAll('.checklist input:checked').forEach(function(cb){ checked.push(cb.nextElementSibling.textContent); });
+  post({
+    action:'submit_sales_followup',
+    companyName:val('sf_company'), contactName:val('sf_contact'),
+    contactEmail:val('sf_cemail'), contactPhone:val('sf_phone'),
+    employeeName:val('sf_emp'), employeeEmail:val('sf_eemail'),
+    meetingDate:val('sf_date'), stage:val('sf_stage'),
+    dealValue:parseFloat(document.getElementById('sf_value').value)||0,
+    closeDate:val('sf_close'), products:(tagSets['sf_products']||[]).join(', '),
+    notes:val('sf_notes'), rating:sfRating, ratingLabel:ratingLabels[sfRating]||'Not rated',
+    competitors:val('sf_competitors'), decisionMaker:val('sf_dm'),
+    checklist:checked.join(', '), extra:val('sf_extra')
+  },'sf_btn',
+  function(res){ showMsg('sf_msg','Sales follow-up saved!','ok'); showBox('sf_box','Follow-up ID: '+res.followupId,'Your follow-up has been logged.'); },
+  function(err){ showMsg('sf_msg','Error: '+err,'err'); });
+}
+
+// Init expense rows
+addExpRow(); addExpRow(); addExpRow();
+</script>
+</body>
+</html>

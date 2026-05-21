@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>UICUSA Reports</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.rp{padding:24px 0 80px;font-family:Arial,sans-serif}
+.rp-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:20px;padding:16px;background:#fff;border-radius:8px;border:1px solid #e0e0e0}
+.rp-toolbar .field{display:flex;flex-direction:column;gap:4px}
+.rp-toolbar label{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.05em}
+.rp-toolbar input,.rp-toolbar select{border:1px solid #d0d0d0;border-radius:6px;padding:7px 10px;font-size:13px;background:#fff;color:#111;outline:none;font-family:Arial,sans-serif}
+.rp-toolbar input:focus,.rp-toolbar select:focus{border-color:#1a3a6b}
+.btn-filter{padding:8px 18px;background:#1a3a6b;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;align-self:flex-end}
+.btn-filter:hover{background:#122d55}
+.btn-export{padding:8px 16px;background:#fff;color:#1a3a6b;border:1px solid #1a3a6b;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;align-self:flex-end}
+.btn-export:hover{background:#f0f4fa}
+.btn-export:disabled{opacity:0.5;cursor:not-allowed}
+
+/* KPI cards */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:#fff;border-radius:8px;border:1px solid #e0e0e0;padding:18px 20px}
+.kpi-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+.kpi-value{font-size:26px;font-weight:700;color:#1a3a6b}
+.kpi-sub{font-size:12px;color:#aaa;margin-top:3px}
+
+/* Charts row */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.chart-card{background:#fff;border-radius:8px;border:1px solid #e0e0e0;padding:20px}
+.chart-title{font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:14px}
+.bar-wrap{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px;font-size:12px}
+.bar-label{width:110px;color:#555;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:#f0f0f0;border-radius:4px;height:14px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:#1a3a6b;transition:width 0.4s}
+.bar-amt{width:70px;text-align:right;color:#111;font-weight:600;flex-shrink:0}
+.status-chart{display:flex;gap:8px;flex-wrap:wrap}
+.status-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600}
+
+/* Tabs inside reports */
+.rp-tabs{display:flex;gap:4px;margin-bottom:16px;background:#f0f2f5;border-radius:8px;padding:4px}
+.rp-tab{flex:1;padding:8px 4px;font-size:12px;border:none;background:transparent;border-radius:6px;cursor:pointer;color:#666;font-weight:500;font-family:Arial,sans-serif}
+.rp-tab.active{background:#fff;color:#1a3a6b;font-weight:700;border:1px solid #e0e0e0}
+.rp-section{display:none}
+.rp-section.active{display:block}
+
+/* Tables */
+.rp-table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e0e0e0}
+table.rp-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+table.rp-table th{padding:10px 12px;background:#1a3a6b;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;text-align:left}
+table.rp-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+table.rp-table tr:last-child td{border-bottom:none}
+table.rp-table tr:hover td{background:#f8f9ff}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700}
+.b-approved{background:#e8f5e9;color:#2e7d32}
+.b-pending{background:#fff3e0;color:#e65100}
+.b-rejected{background:#ffebee;color:#c62828}
+.b-gm{background:#e3f2fd;color:#0d47a1}
+
+/* Detail panel */
+.detail-panel{background:#fff;border-radius:8px;border:1px solid #e0e0e0;padding:24px;margin-bottom:16px;display:none}
+.detail-panel.open{display:block}
+.detail-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:#888;line-height:1}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.detail-field{display:flex;flex-direction:column;gap:3px}
+.detail-field label{font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
+.detail-field span{font-size:14px;color:#111}
+.detail-section{margin-top:16px;padding-top:14px;border-top:1px solid #f0f0f0}
+.detail-section-title{font-size:11px;font-weight:700;color:#1a3a6b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px}
+.exp-line{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+.exp-line:last-child{border-bottom:none}
+.exp-line-total{display:flex;justify-content:space-between;padding:8px 0 0;font-weight:700;font-size:14px;border-top:2px solid #e0e0e0;margin-top:4px}
+.loading{text-align:center;padding:40px;color:#aaa;font-size:14px}
+.empty{text-align:center;padding:40px;color:#aaa;font-size:14px}
+@media(max-width:640px){.kpi-row{grid-template-columns:1fr 1fr}.charts-row{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="rp">
+
+  <!-- TOOLBAR -->
+  <div class="rp-toolbar">
+    <div class="field"><label>From date</label><input type="date" id="rp_from"></div>
+    <div class="field"><label>To date</label><input type="date" id="rp_to"></div>
+    <div class="field"><label>Department</label>
+      <select id="rp_dept">
+        <option value="">All departments</option>
+        <option>Sales</option><option>Engineering</option><option>Operations</option>
+        <option>Finance</option><option>Marketing</option><option>Customer Success</option>
+      </select>
+    </div>
+    <div class="field"><label>Status</label>
+      <select id="rp_status">
+        <option value="">All statuses</option>
+        <option value="PENDING_DEPT">Pending dept.</option>
+        <option value="PENDING_GM">Pending GM</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+    </div>
+    <button class="btn-filter" onclick="loadAll()">Apply filters</button>
+    <button class="btn-export" id="exportBtn" onclick="exportExcel()">⬇ Export to Excel</button>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total trips</div><div class="kpi-value" id="kpi_trips">—</div><div class="kpi-sub">all time</div></div>
+    <div class="kpi"><div class="kpi-label">Approved expenses</div><div class="kpi-value" id="kpi_exp">—</div><div class="kpi-sub">total approved</div></div>
+    <div class="kpi"><div class="kpi-label">Pending approvals</div><div class="kpi-value" id="kpi_pending">—</div><div class="kpi-sub">trips + expenses</div></div>
+    <div class="kpi"><div class="kpi-label">Sales follow-ups</div><div class="kpi-value" id="kpi_sfu">—</div><div class="kpi-sub">logged</div></div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Expense by department</div>
+      <div class="bar-wrap" id="chart_dept"><div class="loading">Loading…</div></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Request status breakdown</div>
+      <div class="status-chart" id="chart_status"><div class="loading">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- DETAIL PANEL (shown when row clicked) -->
+  <div class="detail-panel" id="detailPanel">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div id="detailContent"></div>
+  </div>
+
+  <!-- SECTION TABS -->
+  <div class="rp-tabs">
+    <button class="rp-tab active" onclick="switchRpTab(0)">Trip Requests</button>
+    <button class="rp-tab" onclick="switchRpTab(1)">Trip Reports</button>
+    <button class="rp-tab" onclick="switchRpTab(2)">Expense Reports</button>
+    <button class="rp-tab" onclick="switchRpTab(3)">Sales Follow-ups</button>
+  </div>
+
+  <!-- TRIP REQUESTS TABLE -->
+  <div class="rp-section active" id="rps0">
+    <div class="rp-table-wrap">
+      <table class="rp-table">
+        <thead><tr>
+          <th>Request ID</th><th>Employee</th><th>Dept</th><th>Destination</th>
+          <th>Client</th><th>Dates</th><th>Est. budget</th><th>Status</th><th>Submitted</th>
+        </tr></thead>
+        <tbody id="tb_requests"><tr><td colspan="9" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TRIP REPORTS TABLE -->
+  <div class="rp-section" id="rps1">
+    <div class="rp-table-wrap">
+      <table class="rp-table">
+        <thead><tr>
+          <th>Report ID</th><th>Employee</th><th>Destination</th><th>Client</th>
+          <th>Dates</th><th>Outcomes</th><th>Submitted</th>
+        </tr></thead>
+        <tbody id="tb_reports"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- EXPENSE REPORTS TABLE -->
+  <div class="rp-section" id="rps2">
+    <div class="rp-table-wrap">
+      <table class="rp-table">
+        <thead><tr>
+          <th>Expense ID</th><th>Employee</th><th>Reference</th><th>Submission date</th>
+          <th>Total amount</th><th>Status</th><th>Approved by</th>
+        </tr></thead>
+        <tbody id="tb_expenses"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SALES FOLLOW-UPS TABLE -->
+  <div class="rp-section" id="rps3">
+    <div class="rp-table-wrap">
+      <table class="rp-table">
+        <thead><tr>
+          <th>Follow-up ID</th><th>Employee</th><th>Company</th><th>Contact</th>
+          <th>Stage</th><th>Deal value</th><th>Rating</th><th>Meeting date</th>
+        </tr></thead>
+        <tbody id="tb_sales"><tr><td colspan="8" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var rpData = { requests:[], reports:[], expenses:[], sales:[] };
+var rpTabs = document.querySelectorAll('.rp-tab');
+var rpSections = document.querySelectorAll('.rp-section');
+
+function switchRpTab(i) {
+  rpTabs.forEach(function(t,j){ t.classList.toggle('active', i===j); });
+  rpSections.forEach(function(s,j){ s.classList.toggle('active', i===j); });
+}
+
+function statusBadge(s) {
+  var map = {
+    'PENDING_DEPT': ['b-pending','Pending dept.'],
+    'PENDING_GM':   ['b-gm','Pending GM'],
+    'APPROVED':     ['b-approved','Approved'],
+    'REJECTED':     ['b-rejected','Rejected']
+  };
+  var m = map[s] || ['b-pending', s||'—'];
+  return '<span class="badge ' + m[0] + '">' + m[1] + '</span>';
+}
+
+function fmt(v) { return v || '—'; }
+function fmtAmt(v) { var n=parseFloat(v||0); return n>0 ? '$'+n.toFixed(2) : '$0.00'; }
+function fmtDate(v) { if (!v) return '—'; var d=new Date(v); return isNaN(d)?String(v).substring(0,10):d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function truncate(s, n) { s=String(s||''); return s.length>n ? s.substring(0,n)+'…' : s; }
+
+function loadAll() {
+  var from   = document.getElementById('rp_from').value;
+  var to     = document.getElementById('rp_to').value;
+  var dept   = document.getElementById('rp_dept').value;
+  var status = document.getElementById('rp_status').value;
+  google.script.run
+    .withSuccessHandler(function(data) {
+      rpData = data;
+      renderDashboard(data);
+      renderRequests(data.requests);
+      renderReports(data.reports);
+      renderExpenses(data.expenses);
+      renderSales(data.sales);
+    })
+    .withFailureHandler(function(err) {
+      console.error('Load error:', err);
+    })
+    .getReportData(from, to, dept, status);
+}
+
+function renderDashboard(data) {
+  // KPIs
+  var pending = (data.requests||[]).filter(function(r){ return r.Status==='PENDING_DEPT'||r.Status==='PENDING_GM'; }).length
+              + (data.expenses||[]).filter(function(r){ return r.Status==='PENDING_DEPT'||r.Status==='PENDING_GM'; }).length;
+  var approvedExpTotal = (data.expenses||[]).filter(function(r){ return r.Status==='APPROVED'; }).reduce(function(s,r){ return s+parseFloat(r.TotalAmount||0); },0);
+  document.getElementById('kpi_trips').textContent   = (data.requests||[]).length;
+  document.getElementById('kpi_exp').textContent     = '$' + approvedExpTotal.toFixed(0);
+  document.getElementById('kpi_pending').textContent = pending;
+  document.getElementById('kpi_sfu').textContent     = (data.sales||[]).length;
+
+  // Dept bar chart (from approved expenses)
+  var deptTotals = {};
+  (data.expenses||[]).filter(function(r){ return r.Status==='APPROVED'; }).forEach(function(r) {
+    var d = r.Department || 'Unknown';
+    deptTotals[d] = (deptTotals[d]||0) + parseFloat(r.TotalAmount||0);
+  });
+  var maxAmt = Math.max(1, Math.max.apply(null, Object.values(deptTotals)));
+  var barHtml = Object.keys(deptTotals).sort(function(a,b){ return deptTotals[b]-deptTotals[a]; }).map(function(d) {
+    var pct = (deptTotals[d]/maxAmt*100).toFixed(1);
+    return '<div class="bar-row"><span class="bar-label" title="'+d+'">'+d+'</span>'
+      + '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div>'
+      + '<span class="bar-amt">$'+deptTotals[d].toFixed(0)+'</span></div>';
+  }).join('');
+  document.getElementById('chart_dept').innerHTML = barHtml || '<div class="empty">No approved expenses yet</div>';
+
+  // Status pie (text)
+  var statusCount = {};
+  (data.requests||[]).forEach(function(r){ statusCount[r.Status]=(statusCount[r.Status]||0)+1; });
+  var statusColors = { PENDING_DEPT:'#e65100',PENDING_GM:'#0d47a1',APPROVED:'#2e7d32',REJECTED:'#c62828' };
+  var statusLabels = { PENDING_DEPT:'Pending dept.',PENDING_GM:'Pending GM',APPROVED:'Approved',REJECTED:'Rejected' };
+  var statusHtml = Object.keys(statusCount).map(function(s) {
+    return '<div class="status-pill" style="background:'+statusColors[s]+'22;color:'+statusColors[s]+';border:1px solid '+statusColors[s]+'55">'
+      + '<strong>'+statusCount[s]+'</strong> '+(statusLabels[s]||s)+'</div>';
+  }).join('');
+  document.getElementById('chart_status').innerHTML = statusHtml || '<div class="empty">No requests yet</div>';
+}
+
+function renderRequests(rows) {
+  var tb = document.getElementById('tb_requests');
+  if (!rows || !rows.length) { tb.innerHTML='<tr><td colspan="9" class="empty">No trip requests found</td></tr>'; return; }
+  tb.innerHTML = rows.map(function(r,i) {
+    return '<tr style="cursor:pointer" onclick="showRequestDetail('+i+')">'
+      + '<td><strong>'+fmt(r.RequestID)+'</strong></td>'
+      + '<td>'+fmt(r.EmployeeName)+'<br><span style="color:#aaa;font-size:11px">'+fmt(r.EmployeeEmail)+'</span></td>'
+      + '<td>'+fmt(r.Department)+'</td>'
+      + '<td>'+fmt(r.Destination)+'</td>'
+      + '<td>'+fmt(r.ClientName)+'</td>'
+      + '<td style="white-space:nowrap">'+fmtDate(r.DepartureDate)+'<br>'+fmtDate(r.ReturnDate)+'</td>'
+      + '<td><strong>'+fmtAmt(r.EstTotal)+'</strong></td>'
+      + '<td>'+statusBadge(r.Status)+'</td>'
+      + '<td style="white-space:nowrap;color:#aaa;font-size:12px">'+fmtDate(r.SubmittedAt)+'</td>'
+      + '</tr>';
+  }).join('');
+}
+
+function renderReports(rows) {
+  var tb = document.getElementById('tb_reports');
+  if (!rows || !rows.length) { tb.innerHTML='<tr><td colspan="7" class="empty">No trip reports found</td></tr>'; return; }
+  tb.innerHTML = rows.map(function(r,i) {
+    return '<tr style="cursor:pointer" onclick="showReportDetail('+i+')">'
+      + '<td><strong>'+fmt(r.ReportID)+'</strong></td>'
+      + '<td>'+fmt(r.EmployeeName)+'</td>'
+      + '<td>'+fmt(r.Destination)+'</td>'
+      + '<td>'+fmt(r.ClientName)+'</td>'
+      + '<td style="white-space:nowrap">'+fmtDate(r.DepartureDate)+' – '+fmtDate(r.ReturnDate)+'</td>'
+      + '<td style="max-width:200px">'+truncate(r.Outcomes,80)+'</td>'
+      + '<td style="color:#aaa;font-size:12px;white-space:nowrap">'+fmtDate(r.SubmittedAt)+'</td>'
+      + '</tr>';
+  }).join('');
+}
+
+function renderExpenses(rows) {
+  var tb = document.getElementById('tb_expenses');
+  if (!rows || !rows.length) { tb.innerHTML='<tr><td colspan="7" class="empty">No expense reports found</td></tr>'; return; }
+  tb.innerHTML = rows.map(function(r,i) {
+    return '<tr style="cursor:pointer" onclick="showExpenseDetail('+i+')">'
+      + '<td><strong>'+fmt(r.ExpenseID)+'</strong></td>'
+      + '<td>'+fmt(r.EmployeeName)+'<br><span style="color:#aaa;font-size:11px">'+fmt(r.EmployeeEmail)+'</span></td>'
+      + '<td>'+fmt(r.Reference)+'</td>'
+      + '<td>'+fmtDate(r.SubmissionDate)+'</td>'
+      + '<td><strong style="color:#1a3a6b">'+fmtAmt(r.TotalAmount)+'</strong></td>'
+      + '<td>'+statusBadge(r.Status)+'</td>'
+      + '<td style="font-size:12px">'+fmt(r.GMApprovedBy||r.DeptApprovedBy)+'</td>'
+      + '</tr>';
+  }).join('');
+}
+
+function renderSales(rows) {
+  var tb = document.getElementById('tb_sales');
+  if (!rows || !rows.length) { tb.innerHTML='<tr><td colspan="8" class="empty">No sales follow-ups found</td></tr>'; return; }
+  var ratingLabels = ['','★','★★','★★★','★★★★','★★★★★'];
+  tb.innerHTML = rows.map(function(r,i) {
+    return '<tr style="cursor:pointer" onclick="showSalesDetail('+i+')">'
+      + '<td><strong>'+fmt(r.FollowupID)+'</strong></td>'
+      + '<td>'+fmt(r.EmployeeName)+'</td>'
+      + '<td>'+fmt(r.CompanyName)+'</td>'
+      + '<td>'+fmt(r.ContactName)+'<br><span style="color:#aaa;font-size:11px">'+fmt(r.ContactEmail)+'</span></td>'
+      + '<td><span class="badge b-pending" style="background:#e3f2fd;color:#0d47a1;border:none">'+fmt(r.Stage)+'</span></td>'
+      + '<td><strong>'+fmtAmt(r.DealValue)+'</strong></td>'
+      + '<td style="color:#f9a825">'+( ratingLabels[parseInt(r.Rating)||0]||'—' )+'</td>'
+      + '<td style="white-space:nowrap;color:#aaa;font-size:12px">'+fmtDate(r.MeetingDate)+'</td>'
+      + '</tr>';
+  }).join('');
+}
+
+// -- DETAIL PANELS --
+
+function showRequestDetail(i) {
+  var r = rpData.requests[i];
+  if (!r) return;
+  var html = '<h3 style="font-size:16px;margin-bottom:4px">Trip Request — '+r.RequestID+'</h3>'
+    + statusBadge(r.Status)
+    + '<div class="detail-grid">'
+    + df('Employee', r.EmployeeName + ' (' + r.EmployeeEmail + ')')
+    + df('Department', r.Department)
+    + df('Destination', r.Destination)
+    + df('Client / company', r.ClientName)
+    + df('Departure', fmtDate(r.DepartureDate))
+    + df('Return', fmtDate(r.ReturnDate))
+    + df('Purpose', r.Purpose)
+    + df('Submitted', fmtDate(r.SubmittedAt))
+    + '</div>'
+    + '<div class="detail-section"><div class="detail-section-title">Business justification</div><div style="font-size:14px;color:#333;line-height:1.6">'+(r.Justification||'—')+'</div></div>'
+    + '<div class="detail-section"><div class="detail-section-title">Budget breakdown</div>'
+    + '<div class="exp-line"><span>Airfare</span><span>'+fmtAmt(r.EstAirfare)+'</span></div>'
+    + '<div class="exp-line"><span>Hotel ('+fmt(r.EstNights)+' nights × '+fmtAmt(r.EstHotel)+')</span><span>'+fmtAmt((r.EstNights||0)*(r.EstHotel||0))+'</span></div>'
+    + '<div class="exp-line"><span>Per diem ('+fmt(r.EstDays)+' days × '+fmtAmt(r.EstPerDiem)+')</span><span>'+fmtAmt((r.EstDays||0)*(r.EstPerDiem||0))+'</span></div>'
+    + '<div class="exp-line"><span>Other</span><span>'+fmtAmt(r.EstOther)+'</span></div>'
+    + '<div class="exp-line-total"><span>Est. total</span><span>'+fmtAmt(r.EstTotal)+'</span></div></div>'
+    + (r.DeptApprovedBy ? '<div class="detail-section">'+df('Dept. approved by',r.DeptApprovedBy)+df('On',fmtDate(r.DeptApprovedAt))+'</div>' : '')
+    + (r.GMApprovedBy   ? '<div class="detail-section">'+df('GM approved by',r.GMApprovedBy)+df('On',fmtDate(r.GMApprovedAt))+'</div>' : '')
+    + (r.RejectedBy     ? '<div class="detail-section">'+df('Rejected by',r.RejectedBy)+df('Reason',r.RejectionReason)+'</div>' : '');
+  openDetail(html);
+}
+
+function showReportDetail(i) {
+  var r = rpData.reports[i];
+  if (!r) return;
+  var html = '<h3 style="font-size:16px;margin-bottom:12px">Trip Report — '+r.ReportID+'</h3>'
+    + '<div class="detail-grid">'
+    + df('Employee', r.EmployeeName)
+    + df('Destination', r.Destination)
+    + df('Client', r.ClientName)
+    + df('Contacts met', r.Contacts||'—')
+    + df('Departure', fmtDate(r.DepartureDate))
+    + df('Return', fmtDate(r.ReturnDate))
+    + '</div>'
+    + dSection('Objectives', r.Objectives)
+    + dSection('Key outcomes', r.Outcomes)
+    + dSection('Challenges', r.Challenges)
+    + dSection('Market intelligence', r.Intel)
+    + dSection('Action items', r.Actions)
+    + dSection('Follow-up timeline', r.Timeline)
+    + dSection('Recommendations', r.Recommendations);
+  openDetail(html);
+}
+
+function showExpenseDetail(i) {
+  var r = rpData.expenses[i];
+  if (!r) return;
+  var itemsHtml = '';
+  try {
+    var items = JSON.parse(r.ItemsJSON||'[]');
+    itemsHtml = items.map(function(it) {
+      return '<div class="exp-line"><span>'+fmt(it.description)+' <span style="color:#aaa;font-size:11px">('+fmt(it.category)+', '+fmtDate(it.date)+')</span></span><span>'+fmtAmt(it.amount)+'</span></div>';
+    }).join('');
+  } catch(e) {}
+  var html = '<h3 style="font-size:16px;margin-bottom:4px">Expense Report — '+r.ExpenseID+'</h3>'
+    + statusBadge(r.Status)
+    + '<div class="detail-grid" style="margin-top:12px">'
+    + df('Employee', r.EmployeeName + ' (' + r.EmployeeEmail + ')')
+    + df('Trip Request ID', r.RequestID||'—')
+    + df('Reference', r.Reference||'—')
+    + df('Submission date', fmtDate(r.SubmissionDate))
+    + df('Cost center', r.CostCenter||'—')
+    + df('Submitted', fmtDate(r.SubmittedAt))
+    + '</div>'
+    + '<div class="detail-section"><div class="detail-section-title">Expense items</div>'
+    + itemsHtml
+    + '<div class="exp-line-total"><span>Total</span><span>'+fmtAmt(r.TotalAmount)+'</span></div></div>'
+    + (r.Notes ? dSection('Notes', r.Notes) : '')
+    + (r.DeptApprovedBy ? '<div class="detail-section"><div class="detail-section-title">Approval trail</div>'+df('Dept. approved by',r.DeptApprovedBy)+df('On',fmtDate(r.DeptApprovedAt))+'</div>' : '')
+    + (r.GMApprovedBy   ? '<div class="detail-section">'+df('GM approved by',r.GMApprovedBy)+df('On',fmtDate(r.GMApprovedAt))+'</div>' : '')
+    + (r.RejectedBy     ? '<div class="detail-section">'+df('Rejected by',r.RejectedBy)+df('Reason',r.RejectionReason)+'</div>' : '');
+  openDetail(html);
+}
+
+function showSalesDetail(i) {
+  var r = rpData.sales[i];
+  if (!r) return;
+  var stars = ['','★','★★','★★★','★★★★','★★★★★'][parseInt(r.Rating)||0]||'—';
+  var html = '<h3 style="font-size:16px;margin-bottom:12px">Sales Follow-up — '+r.FollowupID+'</h3>'
+    + '<div class="detail-grid">'
+    + df('Employee', r.EmployeeName + ' (' + r.EmployeeEmail + ')')
+    + df('Company', r.CompanyName)
+    + df('Contact', r.ContactName + ' — ' + r.ContactEmail)
+    + df('Phone', r.ContactPhone||'—')
+    + df('Meeting date', fmtDate(r.MeetingDate))
+    + df('Stage', r.Stage)
+    + df('Est. deal value', fmtAmt(r.DealValue))
+    + df('Expected close', fmtDate(r.CloseDate))
+    + df('Products of interest', r.Products||'—')
+    + df('Interest level', stars + ' ' + (r.RatingLabel||''))
+    + df('Competitors', r.Competitors||'—')
+    + df('Decision-maker', r.DecisionMaker||'—')
+    + '</div>'
+    + dSection('Discussion notes', r.Notes)
+    + dSection('Follow-up checklist', r.Checklist)
+    + dSection('Additional notes', r.Extra);
+  openDetail(html);
+}
+
+function df(label, val) {
+  return '<div class="detail-field"><label>'+label+'</label><span>'+fmt(val)+'</span></div>';
+}
+function dSection(title, val) {
+  if (!val) return '';
+  return '<div class="detail-section"><div class="detail-section-title">'+title+'</div><div style="font-size:14px;color:#333;line-height:1.6">'+fmt(val)+'</div></div>';
+}
+function openDetail(html) {
+  var panel = document.getElementById('detailPanel');
+  document.getElementById('detailContent').innerHTML = html;
+  panel.classList.add('open');
+  panel.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+// -- EXPORT --
+function exportExcel() {
+  var btn = document.getElementById('exportBtn');
+  btn.disabled = true; btn.textContent = '⏳ Generating…';
+  var from   = document.getElementById('rp_from').value;
+  var to     = document.getElementById('rp_to').value;
+  var dept   = document.getElementById('rp_dept').value;
+  var status = document.getElementById('rp_status').value;
+  google.script.run
+    .withSuccessHandler(function(url) {
+      btn.disabled = false; btn.textContent = '⬇ Export to Excel';
+      if (url) { window.open(url, '_blank'); }
+      else { alert('Export failed. Please try again.'); }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.textContent = '⬇ Export to Excel';
+      alert('Export error: ' + err.message);
+    })
+    .exportToExcel(from, to, dept, status);
+}
+
+// Auto-load on page open
+window.addEventListener('load', function(){ loadAll(); });
+</script>
+</body>
+</html>
